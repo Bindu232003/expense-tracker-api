@@ -6,7 +6,7 @@ const cors = require('cors');
 // --- CRITICAL UPDATE: MongoDB Atlas Connection String ---
 // This uses the URI you provided, replacing the placeholder password with the actual one.
 // Note: It's safer practice to use environment variables for this password in production!
-const MONGODB_URI = 'mongodb+srv://sirimb1731_db_user:HelloMangodb@cluster0.zodyznh.mongodb.net/expensetracker?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = 'mongodb+srv://sirimb1731_db_user:HEYMongodb@123@cluster0.zodyznh.mongodb.net/expensetracker?retryWrites=true&w=majority&appName=Cluster0';
 
 // Initialize the Express application
 const app = express();
