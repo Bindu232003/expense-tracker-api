@@ -7,7 +7,7 @@ const cors = require('cors');
 // This uses the URI you provided, replacing the placeholder password with the actual one.
 // Note: It's safer practice to use environment variables for this password in production!
 // REVERT TO THIS URI (Use your correct password here)
-const MONGODB_URI = 'mongodb+srv://sirimb1731_db_user:[YOUR_PASSWORD]@cluster0.zodyznh.mongodb.net/expensetracker?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = 'mongodb+srv://sirimb1731_db_user:Bindu2025Atlas@cluster0.zodyznh.mongodb.net/expensetracker?retryWrites=true&w=majority&appName=Cluster0';
 // NEW URI (Fixes ENOTFOUND by using standard protocol and port)
 
 // Initialize the Express application
