@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Expenditure Analyzer Dashboard</title>
+    <style>
+        /* BASE STYLES */
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            
+            /* CUSTOM BACKGROUND IMAGE (Fix for Zoom/Clarity) */
+            background-image: url('images/image_9ddba4.png'); 
+            background-size: contain;         
+            background-position: center;     
+            background-attachment: fixed;    
+            background-repeat: no-repeat;    
+            background-color: #f0f0f0;       
+        }
+        
+        /* Ensures main content blocks stand out against the background image */
+        h1, h2, form, #message-area, #summary-output, #individual-expenses-output {
+            /* HIGH OPACITY for readability */
+            background-color: rgba(255, 255, 255, 0.98); 
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        form div { margin-bottom: 10px; }
+        input, select, button { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        button { cursor: pointer; background-color: #4CAF50; color: white; border: none; }
+        button:hover { background-color: #45a049; }
+        #message-area { margin-top: 15px; font-weight: bold; }
+        
+        /* TABLE STYLES */
+        #summary-output table, #individual-expenses-output table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin-top: 15px; 
+        }
+        #summary-output th, #summary-output td, #individual-expenses-output th, #individual-expenses-output td { 
+            border: 1px solid #ddd; 
+            padding: 8px; 
+            text-align: left; 
+            background-color: #fff; 
+        }
+        #summary-output th, #individual-expenses-output th { 
+            background-color: #f2f2f2; 
+        }
+        
+        /* FLOATING/INTERACTIVE ICONS & LABELS */
+        #icon-display {
+            text-align: center;
+            margin: 20px 0;
+            background-color: transparent; 
+        }
+
+        /* NEW: Container for icon + label */
+        .icon-group {
+            display: inline-block; 
+            text-align: center;
+            margin: 0 15px; 
+            /* Ensures the floating animation is only on the icon itself */
+        }
+
+        .category-icon {
+            width: 60px; 
+            height: 60px;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.5s ease-in-out, box-shadow 0.3s ease; 
+            
+            /* Animation now applies only to the icon */
+            animation: slowFloat 4s infinite alternate; 
+            margin: 0;
+        }
+
+        /* Hover effect: makes it interactive/zoom in */
+        .category-icon:hover {
+            transform: scale(1.2) translateY(-5px); 
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+        }
+        
+        /* NEW: Style for the label text */
+        .category-label {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px; 
+            margin-bottom: 0;
+        }
+
+        /* Define the floating animation */
+        @keyframes slowFloat {
+            0% {
+                transform: translateY(0);
+            }
+            100% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Stagger the animation timing for variety */
+        #transport-icon { animation-delay: 0.5s; }
+        #utility-icon { animation-delay: 1s; }
+        #entertainment-icon { animation-delay: 1.5s; }
+        #other-icon { animation-delay: 2s; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Expenditure Analyzer Dashboard</h1>
+    
+    <div id="icon-display">
+        <div class="icon-group">
+            <img src="images/food.png" alt="Food Icon" class="category-icon" id="food-icon">
+            <p class="category-label">Food</p>
+        </div>
+        <div class="icon-group">
+            <img src="images/transport.png" alt="Transport Icon" class="category-icon" id="transport-icon">
+            <p class="category-label">Transport</p>
+        </div>
+        <div class="icon-group">
+            <img src="images/utility.png" alt="Utility Icon" class="category-icon" id="utility-icon">
+            <p class="category-label">Utilities</p>
+        </div>
+        <div class="icon-group">
+            <img src="images/entertainment.png" alt="Entertainment Icon" class="category-icon" id="entertainment-icon">
+            <p class="category-label">Entertainment</p>
+        </div>
+        <div class="icon-group">
+            <img src="images/other.png" alt="Other Icon" class="category-icon" id="other-icon">
+            <p class="category-label">Other</p>
+        </div>
+    </div>
+    <hr>
+    
+    <h2>Add New Expense</h2>
+    
+    <form id="expense-form">
+        <div>
+            <label for="description">Description:</label>
+            <input type="text" id="description" required>
+        </div>
+        <div>
+            <label for="amount">Amount (₹):</label>
+            <input type="number" id="amount" step="0.01" required>
+        </div>
+        <div>
+            <label for="category">Category:</label>
+            <select id="category" required>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Utilities">Utilities</option>
+                <option value="Entertainment">Entertainment</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div>
+            <button type="submit">Save Expense</button>
+        </div>
+    </form>
+
+    <p id="message-area"></p>
+
+    <hr>
+
+    <h2>Spending Analysis (Aggregated)</h2>
+    <button onclick="fetchCategorySummary()">Show Category Summary</button>
+    
+    <div id="summary-output">
+        <p>Click the button above to view the total spending analyzed by category.</p>
+    </div>
+
+    <hr>
+    
+    <h2>Individual Expenses (Detailed)</h2>
+    <button onclick="fetchIndividualExpenses()">Show All Transactions</button>
+    
+    <div id="individual-expenses-output">
+        <p>Click the button above to view all saved transactions.</p>
+    </div>
+
+    <script>
+        // URL for your backend API
+        const API_BASE_URL = 'http://localhost:3000/api/expenses';
+        const messageArea = document.getElementById('message-area');
+
+        // --- FUNCTION TO HANDLE FORM SUBMISSION (SAVES EXPENSE) ---
+        document.getElementById('expense-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const data = {
+                description: document.getElementById('description').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                category: document.getElementById('category').value,
+            };
+
+            fetch(API_BASE_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`); 
+                }
+                return response.json();
+            })
+            .then(expense => {
+                messageArea.textContent = `Success! Expense saved with ID: ${expense._id}.`; 
+                messageArea.style.color = 'green';
+                document.getElementById('expense-form').reset();
+                
+                fetchCategorySummary(); 
+                fetchIndividualExpenses();
+            })
+            .catch(error => {
+                messageArea.textContent = `Error saving expense: ${error.message}. Check your console for details.`; 
+                messageArea.style.color = 'red';
+                console.error('Fetch Error:', error);
+            });
+        });
+
+        // --- FUNCTION 1: FETCH AND DISPLAY CATEGORY SUMMARY (AGGREGATION) ---
+        async function fetchCategorySummary() {
+            const summaryOutput = document.getElementById('summary-output');
+            summaryOutput.innerHTML = 'Loading category summary...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/summary/category`); 
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const summaryData = await response.json();
+
+                let html = '<h3>Spending by Category</h3><table>';
+                html += '<tr><th>Category</th><th>Total Spent (₹)</th><th>Count</th></tr>';
+                
+                summaryData.forEach(item => {
+                    html += `
+                        <tr>
+                            <td>${item._id}</td>
+                            <td>₹${item.totalSpent.toFixed(2)}</td> 
+                            <td>${item.count}</td>
+                        </tr>
+                    `;
+                });
+                html += '</table>';
+                
+                summaryOutput.innerHTML = html;
+
+            } catch (error) {
+                summaryOutput.innerHTML = `<p style="color:red;">Error fetching summary: ${error.message}</p>`; 
+                console.error('Fetch Summary Error:', error);
+            }
+        }
+        
+        // --- FUNCTION 2: FETCH AND DISPLAY ALL INDIVIDUAL EXPENSES ---
+        async function fetchIndividualExpenses() {
+            const outputArea = document.getElementById('individual-expenses-output');
+            outputArea.innerHTML = 'Loading individual expenses...';
+
+            try {
+                const response = await fetch(API_BASE_URL); 
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const expenses = await response.json();
+
+                if (expenses.length === 0) {
+                    outputArea.innerHTML = '<p>No expenses found in the database.</p>';
+                    return;
+                }
+
+                let html = '<h3>All Transactions</h3><table>';
+                html += '<tr><th>Description</th><th>Amount (₹)</th><th>Category</th><th>Date</th></tr>';
+                
+                expenses.forEach(expense => {
+                    const date = new Date(expense.date).toLocaleDateString('en-IN'); 
+
+                    html += `
+                        <tr>
+                            <td>${expense.description}</td>
+                            <td>₹${expense.amount.toFixed(2)}</td>
+                            <td>${expense.category}</td>
+                            <td>${date}</td>
+                        </tr>
+                    `;
+                });
+                html += '</table>';
+                
+                outputArea.innerHTML = html;
+
+            } catch (error) {
+                outputArea.innerHTML = `<p style="color:red;">Error fetching expenses: ${error.message}</p>`;
+                console.error('Fetch Expenses Error:', error);
+            }
+        }
+
+        // Run both fetches on page load to display initial data
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchCategorySummary();
+            fetchIndividualExpenses();
+        });
+    </script>
+</body>
+</html>
