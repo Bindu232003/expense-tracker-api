@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Expenditure Analyzer Dashboard</title>
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    
     <style>
         /* BASE STYLES */
         body { 
@@ -28,8 +31,28 @@
         }
 
         form div { margin-bottom: 10px; }
-        input, select, button { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        button { cursor: pointer; background-color: #4CAF50; color: white; border: none; }
+        input, select, button { 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            /* Added width 100% for better mobile form layout */
+            width: 100%; 
+            box-sizing: border-box; /* Includes padding and border in the element's total width and height */
+            max-width: 400px; /* Limits input width on larger screens */
+        }
+        select {
+            /* Ensures select width is consistent with input width */
+            max-width: 400px; 
+        }
+
+        button { 
+            cursor: pointer; 
+            background-color: #4CAF50; 
+            color: white; 
+            border: none; 
+            width: auto; /* Buttons should be auto-width, not 100% */
+            max-width: none;
+        }
         button:hover { background-color: #45a049; }
         #message-area { margin-top: 15px; font-weight: bold; }
         
@@ -38,12 +61,17 @@
             border-collapse: collapse; 
             width: 100%; 
             margin-top: 15px; 
+            /* Ensures tables are scrollable on very small screens */
+            display: block; 
+            overflow-x: auto;
         }
         #summary-output th, #summary-output td, #individual-expenses-output th, #individual-expenses-output td { 
             border: 1px solid #ddd; 
             padding: 8px; 
             text-align: left; 
             background-color: #fff; 
+            /* Optional: Make cells wrap text on mobile */
+            white-space: nowrap; 
         }
         #summary-output th, #individual-expenses-output th { 
             background-color: #f2f2f2; 
@@ -56,53 +84,45 @@
             background-color: transparent; 
         }
 
-        /* NEW: Container for icon + label */
         .icon-group {
             display: inline-block; 
             text-align: center;
-            margin: 0 15px; 
-            /* Ensures the floating animation is only on the icon itself */
+            margin: 0 10px 20px 10px; /* Reduced side margin for mobile, added bottom margin */
         }
 
         .category-icon {
-            width: 60px; 
-            height: 60px;
+            width: 50px; /* Reduced icon size slightly for mobile fit */
+            height: 50px;
             cursor: pointer;
             border-radius: 50%;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             transition: transform 0.5s ease-in-out, box-shadow 0.3s ease; 
-            
-            /* Animation now applies only to the icon */
             animation: slowFloat 4s infinite alternate; 
             margin: 0;
         }
 
-        /* Hover effect: makes it interactive/zoom in */
         .category-icon:hover {
-            transform: scale(1.2) translateY(-5px); 
-            box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+            transform: scale(1.1) translateY(-5px); /* Adjusted scale for mobile */
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
         }
         
-        /* NEW: Style for the label text */
         .category-label {
-            font-size: 0.9em;
+            font-size: 0.8em; /* Adjusted font size for mobile */
             font-weight: bold;
             color: #333;
             margin-top: 5px; 
             margin-bottom: 0;
         }
 
-        /* Define the floating animation */
         @keyframes slowFloat {
             0% {
                 transform: translateY(0);
             }
             100% {
-                transform: translateY(-10px);
+                transform: translateY(-8px); /* Reduced float distance */
             }
         }
-
-        /* Stagger the animation timing for variety */
+        /* Staggered animation delays remain */
         #transport-icon { animation-delay: 0.5s; }
         #utility-icon { animation-delay: 1s; }
         #entertainment-icon { animation-delay: 1.5s; }
@@ -185,8 +205,8 @@
     </div>
 
     <script>
-        // URL for your backend API
-        const API_BASE_URL = 'http://localhost:3000/api/expenses';
+        // UPDATED: URL pointing to your LIVE Render backend
+        const API_BASE_URL = 'https://expense-tracker-api-oxzyl.onrender.com/api/expenses';
         const messageArea = document.getElementById('message-area');
 
         // --- FUNCTION TO HANDLE FORM SUBMISSION (SAVES EXPENSE) ---
@@ -244,6 +264,7 @@
                 html += '<tr><th>Category</th><th>Total Spent (₹)</th><th>Count</th></tr>';
                 
                 summaryData.forEach(item => {
+                    // *** RENDER FIX: Using template literals (backticks) for correct data display ***
                     html += `
                         <tr>
                             <td>${item._id}</td>
