@@ -200,6 +200,7 @@
     </div>
 
     <hr>
+    
     <h2>Individual Expenses (Detailed)</h2>
     <button onclick="fetchIndividualExpenses()">Show All Transactions</button>
     
@@ -242,11 +243,10 @@
                 
                 // Refresh data after successful save
                 fetchCategorySummary(); 
-                fetchDailySummary(); // Refresh the new daily summary
+                fetchDailySummary(); 
                 fetchIndividualExpenses();
             })
             .catch(error => {
-                // If it fails, try to wake the server up again.
                 messageArea.textContent = `Error saving expense: ${error.message}. Please wait 1 minute and try again to allow the server to wake up.`; 
                 messageArea.style.color = 'red';
                 console.error('Fetch Error:', error);
@@ -288,13 +288,12 @@
             }
         }
         
-        // --- NEW FUNCTION: FETCH AND DISPLAY DAILY SPENDING SUMMARY ---
+        // --- FUNCTION: FETCH AND DISPLAY DAILY SPENDING SUMMARY ---
         async function fetchDailySummary() {
             const dailyOutput = document.getElementById('daily-summary-output');
             dailyOutput.innerHTML = 'Loading daily summary...';
 
             try {
-                // This calls the necessary /summary/daily route on your backend
                 const response = await fetch(`${API_BASE_URL}/summary/daily`); 
                 
                 if (!response.ok) {
@@ -311,7 +310,6 @@
                 html += '<tr><th>Date</th><th>Total Spent (₹)</th></tr>';
                 
                 dailyData.forEach(item => {
-                    // item._id is the date string (YYYY-MM-DD) from the backend aggregation
                     html += `
                         <tr>
                             <td>${item._id}</td>
@@ -328,8 +326,45 @@
                 console.error('Fetch Daily Summary Error:', error);
             }
         }
+        
+        // --- NEW FUNCTION: HANDLE DELETING AN EXPENSE ---
+        async function deleteExpense(id) {
+            if (!confirm('Are you sure you want to delete this expense? This action cannot be undone.')) {
+                return; // User cancelled
+            }
+            
+            const deleteUrl = `${API_BASE_URL}/${id}`; 
 
-        // --- FUNCTION 2: FETCH AND DISPLAY ALL INDIVIDUAL EXPENSES ---
+            messageArea.textContent = `Deleting expense ID: ${id}...`;
+            messageArea.style.color = 'orange';
+
+            try {
+                const response = await fetch(deleteUrl, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                }
+                
+                messageArea.textContent = `Successfully deleted expense: ${id}`;
+                messageArea.style.color = 'green';
+                
+                // Refresh all tables to show the updated data
+                fetchCategorySummary(); 
+                fetchDailySummary();
+                fetchIndividualExpenses();
+
+            } catch (error) {
+                messageArea.textContent = `Error deleting expense: ${error.message}`; 
+                messageArea.style.color = 'red';
+                console.error('Delete Error:', error);
+            }
+        }
+
+
+        // --- FUNCTION 2: FETCH AND DISPLAY ALL INDIVIDUAL EXPENSES (UPDATED WITH DELETE BUTTON) ---
         async function fetchIndividualExpenses() {
             const outputArea = document.getElementById('individual-expenses-output');
             outputArea.innerHTML = 'Loading individual expenses...';
@@ -348,7 +383,8 @@
                 }
 
                 let html = '<h3>All Transactions</h3><table>';
-                html += '<tr><th>Description</th><th>Amount (₹)</th><th>Category</th><th>Date</th></tr>';
+                // ADD NEW COLUMN FOR ACTIONS/DELETE
+                html += '<tr><th>Description</th><th>Amount (₹)</th><th>Category</th><th>Date</th><th>Actions</th></tr>'; 
                 
                 expenses.forEach(expense => {
                     const date = new Date(expense.date).toLocaleDateString('en-IN'); 
@@ -359,6 +395,14 @@
                             <td>₹${expense.amount.toFixed(2)}</td>
                             <td>${expense.category}</td>
                             <td>${date}</td>
+                            <td>
+                                <button 
+                                    onclick="deleteExpense('${expense._id}')" 
+                                    style="background-color: #dc3545; color: white; width: 100%; max-width: 100px; padding: 5px;"
+                                >
+                                    Delete
+                                </button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -372,10 +416,11 @@
             }
         }
 
+
         // Run all fetches on page load to display initial data
         document.addEventListener('DOMContentLoaded', () => {
             fetchCategorySummary();
-            fetchDailySummary(); // <<< Now runs on page load!
+            fetchDailySummary();
             fetchIndividualExpenses();
         });
     </script>
