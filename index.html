@@ -12,7 +12,7 @@
             font-family: Arial, sans-serif; 
             padding: 20px; 
             
-            /* CUSTOM BACKGROUND IMAGE (Fix for Zoom/Clarity) */
+            /* CUSTOM BACKGROUND IMAGE */
             background-image: url('images/image_9ddba4.png'); 
             background-size: contain;         
             background-position: center;     
@@ -35,13 +35,11 @@
             padding: 8px; 
             border: 1px solid #ccc; 
             border-radius: 4px; 
-            /* Added width 100% for better mobile form layout */
             width: 100%; 
-            box-sizing: border-box; /* Includes padding and border in the element's total width and height */
-            max-width: 400px; /* Limits input width on larger screens */
+            box-sizing: border-box; 
+            max-width: 400px;
         }
         select {
-            /* Ensures select width is consistent with input width */
             max-width: 400px; 
         }
 
@@ -50,7 +48,7 @@
             background-color: #4CAF50; 
             color: white; 
             border: none; 
-            width: auto; /* Buttons should be auto-width, not 100% */
+            width: auto; 
             max-width: none;
         }
         button:hover { background-color: #45a049; }
@@ -61,7 +59,6 @@
             border-collapse: collapse; 
             width: 100%; 
             margin-top: 15px; 
-            /* Ensures tables are scrollable on very small screens */
             display: block; 
             overflow-x: auto;
         }
@@ -70,7 +67,6 @@
             padding: 8px; 
             text-align: left; 
             background-color: #fff; 
-            /* Optional: Make cells wrap text on mobile */
             white-space: nowrap; 
         }
         #summary-output th, #individual-expenses-output th { 
@@ -87,11 +83,11 @@
         .icon-group {
             display: inline-block; 
             text-align: center;
-            margin: 0 10px 20px 10px; /* Reduced side margin for mobile, added bottom margin */
+            margin: 0 10px 20px 10px; 
         }
 
         .category-icon {
-            width: 50px; /* Reduced icon size slightly for mobile fit */
+            width: 50px; 
             height: 50px;
             cursor: pointer;
             border-radius: 50%;
@@ -102,12 +98,12 @@
         }
 
         .category-icon:hover {
-            transform: scale(1.1) translateY(-5px); /* Adjusted scale for mobile */
+            transform: scale(1.1) translateY(-5px); 
             box-shadow: 0 0 15px rgba(76, 175, 80, 0.8);
         }
         
         .category-label {
-            font-size: 0.8em; /* Adjusted font size for mobile */
+            font-size: 0.8em; 
             font-weight: bold;
             color: #333;
             margin-top: 5px; 
@@ -119,7 +115,7 @@
                 transform: translateY(0);
             }
             100% {
-                transform: translateY(-8px); /* Reduced float distance */
+                transform: translateY(-8px); 
             }
         }
         /* Staggered animation delays remain */
@@ -205,8 +201,8 @@
     </div>
 
     <script>
-        // UPDATED: URL pointing to your LIVE Render backend
-        const API_BASE_URL = 'https://expense-tracker-api-oxzyl.onrender.com/api/expenses';
+        // CRITICAL: URL pointing to your LIVE Render backend
+        const API_BASE_URL = 'https://expense-tracker-api-oxzx.onrender.com/api/expenses';
         const messageArea = document.getElementById('message-area');
 
         // --- FUNCTION TO HANDLE FORM SUBMISSION (SAVES EXPENSE) ---
@@ -237,11 +233,13 @@
                 messageArea.style.color = 'green';
                 document.getElementById('expense-form').reset();
                 
+                // Refresh data after successful save
                 fetchCategorySummary(); 
                 fetchIndividualExpenses();
             })
             .catch(error => {
-                messageArea.textContent = `Error saving expense: ${error.message}. Check your console for details.`; 
+                // If it fails, try to wake the server up again.
+                messageArea.textContent = `Error saving expense: ${error.message}. Please wait 1 minute and try again to allow the server to wake up.`; 
                 messageArea.style.color = 'red';
                 console.error('Fetch Error:', error);
             });
@@ -264,7 +262,6 @@
                 html += '<tr><th>Category</th><th>Total Spent (₹)</th><th>Count</th></tr>';
                 
                 summaryData.forEach(item => {
-                    // *** RENDER FIX: Using template literals (backticks) for correct data display ***
                     html += `
                         <tr>
                             <td>${item._id}</td>
