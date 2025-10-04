@@ -1,4 +1,4 @@
-// server.js (Updated with Daily Summary Route)
+// server.js (Fully Updated with Daily Summary and DELETE routes)
 
 // Import necessary modules
 const express = require('express');
@@ -77,7 +77,6 @@ app.get('/api/expenses/summary/category', async (req, res) => {
 });
 
 // 4. GET: Retrieve DAILY summary (Aggregation Pipeline)
-// This is the NEW route needed for the frontend's Daily Spending Summary table
 app.get('/api/expenses/summary/daily', async (req, res) => {
     try {
         const dailySummary = await Expense.aggregate([
@@ -97,6 +96,26 @@ app.get('/api/expenses/summary/daily', async (req, res) => {
         res.status(500).send({ message: 'Error fetching daily summary', error: error.message });
     }
 });
+
+// 5. DELETE: Delete an expense by ID (NEW ROUTE)
+app.delete('/api/expenses/:id', async (req, res) => {
+    try {
+        const deletedExpense = await Expense.findByIdAndDelete(req.params.id);
+        
+        if (!deletedExpense) {
+            return res.status(404).send({ message: "Expense not found." });
+        }
+        
+        res.status(200).send({ message: "Expense successfully deleted.", deletedExpense });
+    } catch (error) {
+        // Handle Mongoose error for invalid ID format
+        if (error.kind === 'ObjectId') {
+             return res.status(400).send({ message: "Invalid Expense ID format." });
+        }
+        res.status(500).send({ message: 'Error deleting expense', error: error.message });
+    }
+});
+
 
 // --- Server Start ---
 app.listen(PORT, () => {
