@@ -22,7 +22,7 @@
         }
         
         /* Ensures main content blocks stand out against the background image */
-        h1, h2, form, #message-area, #summary-output, #individual-expenses-output {
+        h1, h2, form, #message-area, #summary-output, #individual-expenses-output, #daily-summary-output {
             /* HIGH OPACITY for readability */
             background-color: rgba(255, 255, 255, 0.98); 
             padding: 15px;
@@ -55,21 +55,21 @@
         #message-area { margin-top: 15px; font-weight: bold; }
         
         /* TABLE STYLES */
-        #summary-output table, #individual-expenses-output table { 
+        #summary-output table, #individual-expenses-output table, #daily-summary-output table { 
             border-collapse: collapse; 
             width: 100%; 
             margin-top: 15px; 
             display: block; 
             overflow-x: auto;
         }
-        #summary-output th, #summary-output td, #individual-expenses-output th, #individual-expenses-output td { 
+        #summary-output th, #summary-output td, #individual-expenses-output th, #individual-expenses-output td, #daily-summary-output th, #daily-summary-output td { 
             border: 1px solid #ddd; 
             padding: 8px; 
             text-align: left; 
             background-color: #fff; 
             white-space: nowrap; 
         }
-        #summary-output th, #individual-expenses-output th { 
+        #summary-output th, #individual-expenses-output th, #daily-summary-output th { 
             background-color: #f2f2f2; 
         }
         
@@ -193,6 +193,13 @@
 
     <hr>
     
+    <h2>Daily Spending Summary</h2>
+    <button onclick="fetchDailySummary()">Show Total Spent Per Day</button>
+    <div id="daily-summary-output">
+        <p>Click the button above to view your total spending for each day.</p>
+    </div>
+
+    <hr>
     <h2>Individual Expenses (Detailed)</h2>
     <button onclick="fetchIndividualExpenses()">Show All Transactions</button>
     
@@ -235,6 +242,7 @@
                 
                 // Refresh data after successful save
                 fetchCategorySummary(); 
+                fetchDailySummary(); // Refresh the new daily summary
                 fetchIndividualExpenses();
             })
             .catch(error => {
@@ -280,6 +288,47 @@
             }
         }
         
+        // --- NEW FUNCTION: FETCH AND DISPLAY DAILY SPENDING SUMMARY ---
+        async function fetchDailySummary() {
+            const dailyOutput = document.getElementById('daily-summary-output');
+            dailyOutput.innerHTML = 'Loading daily summary...';
+
+            try {
+                // This calls the necessary /summary/daily route on your backend
+                const response = await fetch(`${API_BASE_URL}/summary/daily`); 
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const dailyData = await response.json();
+
+                if (dailyData.length === 0) {
+                    dailyOutput.innerHTML = '<p>No daily spending data found.</p>';
+                    return;
+                }
+
+                let html = '<h3>Total Spent Per Day</h3><table>';
+                html += '<tr><th>Date</th><th>Total Spent (₹)</th></tr>';
+                
+                dailyData.forEach(item => {
+                    // item._id is the date string (YYYY-MM-DD) from the backend aggregation
+                    html += `
+                        <tr>
+                            <td>${item._id}</td>
+                            <td>₹${item.totalSpent.toFixed(2)}</td> 
+                        </tr>
+                    `;
+                });
+                html += '</table>';
+                
+                dailyOutput.innerHTML = html;
+
+            } catch (error) {
+                dailyOutput.innerHTML = `<p style="color:red;">Error fetching daily summary: ${error.message}</p>`; 
+                console.error('Fetch Daily Summary Error:', error);
+            }
+        }
+
         // --- FUNCTION 2: FETCH AND DISPLAY ALL INDIVIDUAL EXPENSES ---
         async function fetchIndividualExpenses() {
             const outputArea = document.getElementById('individual-expenses-output');
@@ -323,9 +372,10 @@
             }
         }
 
-        // Run both fetches on page load to display initial data
+        // Run all fetches on page load to display initial data
         document.addEventListener('DOMContentLoaded', () => {
             fetchCategorySummary();
+            fetchDailySummary(); // <<< Now runs on page load!
             fetchIndividualExpenses();
         });
     </script>
