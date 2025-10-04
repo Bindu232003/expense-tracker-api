@@ -1,4 +1,4 @@
-// server.js (Original, combined file structure)
+// server.js (Updated with Daily Summary Route)
 
 // Import necessary modules
 const express = require('express');
@@ -73,6 +73,28 @@ app.get('/api/expenses/summary/category', async (req, res) => {
         res.send(summary);
     } catch (error) {
         res.status(500).send({ message: 'Error fetching category summary', error: error.message });
+    }
+});
+
+// 4. GET: Retrieve DAILY summary (Aggregation Pipeline)
+// This is the NEW route needed for the frontend's Daily Spending Summary table
+app.get('/api/expenses/summary/daily', async (req, res) => {
+    try {
+        const dailySummary = await Expense.aggregate([
+            {
+                $group: {
+                    // Group by the date string (YYYY-MM-DD)
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$date" } },
+                    totalSpent: { $sum: '$amount' }
+                }
+            },
+            {
+                $sort: { _id: -1 } // Sort newest day first
+            }
+        ]);
+        res.send(dailySummary);
+    } catch (error) {
+        res.status(500).send({ message: 'Error fetching daily summary', error: error.message });
     }
 });
 
