@@ -22,7 +22,7 @@
         }
         
         /* Ensures main content blocks stand out against the background image */
-        h1, h2, form, #message-area, #summary-output, #individual-expenses-output {
+        h1, h2, form, #message-area, #summary-output, #individual-expenses-output, #balance-section {
             /* HIGH OPACITY for readability */
             background-color: rgba(255, 255, 255, 0.98); 
             padding: 15px;
@@ -52,6 +52,28 @@
             max-width: none;
         }
         button:hover { background-color: #45a049; }
+        
+        /* NEW STYLES FOR BALANCE */
+        #balance-section h2 { 
+            margin-top: 0; 
+            background-color: transparent; 
+            padding: 0;
+        }
+        #current-balance {
+            font-size: 2em; 
+            font-weight: bold; 
+            color: #007bff;
+            margin: 0;
+            display: block;
+        }
+        /* Style for the income button */
+        #income-form button {
+            background-color: #007bff !important; /* Blue for deposit/income */
+        }
+        #income-form button:hover {
+            background-color: #0056b3 !important;
+        }
+
         #message-area { margin-top: 15px; font-weight: bold; }
         
         /* TABLE STYLES */
@@ -130,6 +152,21 @@
 
     <h1>Expenditure Analyzer Dashboard</h1>
     
+    <div id="balance-section">
+        <h2>Current Running Balance</h2>
+        <p id="current-balance" style="font-size: 2em; font-weight: bold;">Loading Balance...</p>
+    </div>
+    <h2>Add Income/Deposit</h2>
+    <form id="income-form">
+        <div>
+            <label for="income-amount">Amount (₹):</label>
+            <input type="number" id="income-amount" step="0.01" required placeholder="e.g., 50000">
+        </div>
+        <div>
+            <button type="submit">Add Income to Balance</button>
+        </div>
+    </form>
+    <hr>
     <div id="icon-display">
         <div class="icon-group">
             <img src="images/food.png" alt="Food Icon" class="category-icon" id="food-icon">
@@ -205,7 +242,69 @@
         const API_BASE_URL = 'https://expense-tracker-api-oxzx.onrender.com/api/expenses';
         const messageArea = document.getElementById('message-area');
 
-        // --- FUNCTION TO HANDLE FORM SUBMISSION (SAVES EXPENSE) ---
+        // --- NEW FUNCTION: FETCH AND DISPLAY BALANCE ---
+        async function fetchCurrentBalance() {
+            const balanceOutput = document.getElementById('current-balance');
+            balanceOutput.textContent = 'Loading Balance...';
+            balanceOutput.style.color = '#007bff';
+
+            try {
+                // Fetch from the new /api/balance route (using the base URL but cutting off /expenses)
+                const balanceUrl = API_BASE_URL.replace('/expenses', '/balance'); 
+                const response = await fetch(balanceUrl); 
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                const balance = data.currentBalance || 0; // Use 0 if balance is null/undefined
+
+                balanceOutput.textContent = `₹${balance.toFixed(2)}`;
+                balanceOutput.style.color = balance < 0 ? 'red' : '#007bff'; // Turn red if negative!
+
+            } catch (error) {
+                balanceOutput.textContent = `Error fetching balance: ${error.message}`; 
+                balanceOutput.style.color = 'red';
+                console.error('Fetch Balance Error:', error);
+            }
+        }
+        
+        // --- NEW FUNCTION: HANDLE INCOME FORM SUBMISSION ---
+        document.getElementById('income-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const amount = parseFloat(document.getElementById('income-amount').value);
+            const data = { amount: amount };
+            const depositUrl = API_BASE_URL.replace('/expenses', '/balance/deposit'); // New deposit route
+
+            fetch(depositUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`); 
+                }
+                return response.json();
+            })
+            .then(result => {
+                messageArea.textContent = `Success! ${result.message}`; 
+                messageArea.style.color = 'green';
+                document.getElementById('income-form').reset();
+                fetchCurrentBalance(); // Update balance display
+            })
+            .catch(error => {
+                messageArea.textContent = `Error adding income: ${error.message}`; 
+                messageArea.style.color = 'red';
+                console.error('Income Fetch Error:', error);
+            });
+        });
+
+        // --- FUNCTION TO HANDLE EXPENSE FORM SUBMISSION (SAVES EXPENSE & UPDATES BALANCE) ---
         document.getElementById('expense-form').addEventListener('submit', function(event) {
             event.preventDefault();
 
@@ -233,12 +332,12 @@
                 messageArea.style.color = 'green';
                 document.getElementById('expense-form').reset();
                 
-                // Refresh data after successful save
+                // Refresh all data after successful save
+                fetchCurrentBalance(); 
                 fetchCategorySummary(); 
                 fetchIndividualExpenses();
             })
             .catch(error => {
-                // If it fails, try to wake the server up again.
                 messageArea.textContent = `Error saving expense: ${error.message}. Please wait 1 minute and try again to allow the server to wake up.`; 
                 messageArea.style.color = 'red';
                 console.error('Fetch Error:', error);
@@ -323,8 +422,9 @@
             }
         }
 
-        // Run both fetches on page load to display initial data
+        // Run all fetches on page load to display initial data
         document.addEventListener('DOMContentLoaded', () => {
+            fetchCurrentBalance(); // NEW: Fetch balance on load
             fetchCategorySummary();
             fetchIndividualExpenses();
         });
